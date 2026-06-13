@@ -34,6 +34,16 @@ jobs:
           USERNAME: ${{ github.repository_owner }}
           SETTING_JSON: conf/github-profile-3d-contrib.json
           YEAR: 2026
+      - name: patch 2025 repo stats
+        run: node scripts/patch-yearly-repo-stats.js 2025 profile-3d-contrib/2025-day.svg profile-3d-contrib/2025-night.svg
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}
+          USERNAME: ${{ github.repository_owner }}
+      - name: patch current repo stats
+        run: node scripts/patch-yearly-repo-stats.js 2026 profile-3d-contrib/day.svg profile-3d-contrib/night.svg
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}
+          USERNAME: ${{ github.repository_owner }}
 
       # push the content of <build_dir> to a branch
       # the content will be available at https://raw.githubusercontent.com/<github_user>/<repository>/<target_branch>/<file> , or as github page
