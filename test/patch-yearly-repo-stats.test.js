@@ -1,4 +1,6 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const test = require('node:test');
 
 const {
@@ -22,7 +24,7 @@ const makeSvg = () =>
         '<text style="font-size: 32px;" x="650">16<title>16</title></text>',
         `<g transform="translate(736, 802), scale(2)"><path d="${FORK_ICON}" class="fill-fg"></path></g>`,
         '<text style="font-size: 32px;" x="772">4<title>4</title></text>',
-        '<text style="font-size: 16px;">2025-01-01 / 2025-12-31</text>',
+        '<text style="font-size: 16px;">2026-01-01 / 2026-12-31</text>',
         '</g>',
         '</svg>',
     ].join('');
@@ -33,6 +35,33 @@ const jsonResponse = (body) => ({
     statusText: 'OK',
     headers: { get: () => null },
     json: async () => body,
+});
+
+test('profile renders and generates only the current contribution chart', () => {
+    const repoRoot = path.resolve(__dirname, '..');
+    const readRepoFile = (filePath) =>
+        fs.readFileSync(path.join(repoRoot, filePath), 'utf8');
+
+    const readme = readRepoFile('README.md');
+    const workflow = readRepoFile('.github/workflows/profile-3d-contrib.yml');
+
+    assert.equal(readme.includes('2025 Contributions'), false);
+    assert.equal(readme.includes('2025-day.svg'), false);
+    assert.equal(readme.includes('2025-night.svg'), false);
+    assert.equal(workflow.includes('github-profile-2025.json'), false);
+    assert.equal(workflow.includes('YEAR: 2025'), false);
+    assert.equal(workflow.includes('patch-yearly-repo-stats.js 2025'), false);
+    assert.equal(
+        fs.existsSync(path.join(repoRoot, 'conf/github-profile-2025.json')),
+        false,
+    );
+    assert.equal(workflow.includes('YEAR: 2026'), false);
+    assert.match(workflow, /CURRENT_YEAR=\$\(date -u \+%Y\)/);
+    assert.match(
+        workflow,
+        /patch-yearly-repo-stats\.js \"\$CURRENT_YEAR\" profile-3d-contrib\/day\.svg profile-3d-contrib\/night\.svg/,
+    );
+    assert.match(readme, /Current Contributions/);
 });
 
 test('patches star and fork values without removing icons or year-specific contribution data', () => {
@@ -46,7 +75,7 @@ test('patches star and fork values without removing icons or year-specific contr
     assert.match(patched, />1<title>1<\/title><\/text>/);
     assert.match(patched, />126<\/text>/);
     assert.match(patched, />contributions<\/text>/);
-    assert.match(patched, />2025-01-01 \/ 2025-12-31<\/text>/);
+    assert.match(patched, />2026-01-01 \/ 2026-12-31<\/text>/);
 });
 
 test('collects repository stars and forks created during the selected year', async () => {
@@ -73,21 +102,21 @@ test('collects repository stars and forks created during the selected year', asy
         }
         if (url.includes('/repos/junkey/alpha/stargazers')) {
             return jsonResponse([
-                { starred_at: '2025-01-05T00:00:00Z' },
                 { starred_at: '2026-01-05T00:00:00Z' },
+                { starred_at: '2027-01-05T00:00:00Z' },
             ]);
         }
         if (url.includes('/repos/junkey/beta/stargazers')) {
-            return jsonResponse([{ starred_at: '2025-12-31T23:59:59Z' }]);
+            return jsonResponse([{ starred_at: '2026-12-31T23:59:59Z' }]);
         }
         if (url.includes('/repos/junkey/alpha/forks')) {
             return jsonResponse([
-                { created_at: '2024-12-31T23:59:59Z' },
-                { created_at: '2025-07-10T00:00:00Z' },
+                { created_at: '2025-12-31T23:59:59Z' },
+                { created_at: '2026-07-10T00:00:00Z' },
             ]);
         }
         if (url.includes('/repos/junkey/beta/forks')) {
-            return jsonResponse([{ created_at: '2025-03-01T00:00:00Z' }]);
+            return jsonResponse([{ created_at: '2026-03-01T00:00:00Z' }]);
         }
         throw new Error(`Unexpected URL: ${url}`);
     };
@@ -96,7 +125,7 @@ test('collects repository stars and forks created during the selected year', asy
         fetchImpl,
         token: 'token',
         username: 'junkey',
-        year: 2025,
+        year: 2026,
     });
 
     assert.deepEqual(stats, { stars: 2, forks: 2 });

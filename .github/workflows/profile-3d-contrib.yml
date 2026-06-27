@@ -20,27 +20,16 @@ jobs:
     name: generate-github-profile-3d-contrib
     steps:
       - uses: actions/checkout@v5
-      - name: generate 2025 3d graph
-        uses: yoshi389111/github-profile-3d-contrib@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}
-          USERNAME: ${{ github.repository_owner }}
-          SETTING_JSON: conf/github-profile-2025.json
-          YEAR: 2025
       - name: generate current 3d graph
         uses: yoshi389111/github-profile-3d-contrib@latest
         env:
           GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}
           USERNAME: ${{ github.repository_owner }}
           SETTING_JSON: conf/github-profile-3d-contrib.json
-          YEAR: 2026
-      - name: patch 2025 repo stats
-        run: node scripts/patch-yearly-repo-stats.js 2025 profile-3d-contrib/2025-day.svg profile-3d-contrib/2025-night.svg
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}
-          USERNAME: ${{ github.repository_owner }}
       - name: patch current repo stats
-        run: node scripts/patch-yearly-repo-stats.js 2026 profile-3d-contrib/day.svg profile-3d-contrib/night.svg
+        run: |
+          CURRENT_YEAR=$(date -u +%Y)
+          node scripts/patch-yearly-repo-stats.js "$CURRENT_YEAR" profile-3d-contrib/day.svg profile-3d-contrib/night.svg
         env:
           GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}
           USERNAME: ${{ github.repository_owner }}
